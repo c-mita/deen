@@ -225,7 +225,7 @@ fn serializeTrieRec(allocator: Allocator, node: TrieNode(WordDataSpec), data: *A
 }
 
 pub fn getFromSerializedTrie(serialized: []const u8, key: []const u8) !?WordDataSpec {
-    const wrapped = navigateToSubTrie(serialized, key) orelse return .{};
+    const wrapped = navigateToSubTrie(serialized, key) orelse return null;
     const node = wrapped.data;
     return .{ .start = node.value_offset, .len = node.value_size };
 }
