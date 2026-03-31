@@ -1,11 +1,11 @@
 #!/usr/bin/bash
 
 _deen_matching_words() {
-
   local cur
   cur="${COMP_WORDS[COMP_CWORD]}"
-  _script_commands=$(deen --walk $cur)
-  COMPREPLY=( $(compgen -W "${_script_commands}") )
+  cur="${cur//\\/}"
+  compopt -o filenames -o nospace
+  mapfile -t COMPREPLY < <(deen --walk "$cur")
   return 0
 }
 
