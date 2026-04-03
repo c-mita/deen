@@ -1,9 +1,9 @@
 const std = @import("std");
 const ArrayList = @import("std").ArrayList;
-const Trie = @import("prefix_trie.zig").Trie;
-const WordDataSpec = @import("prefix_trie.zig").WordDataSpec;
-const serializeTrie = @import("prefix_trie.zig").serializeTrie;
-const iterateSerializedTrie = @import("prefix_trie.zig").iterateSerializedTrie;
+const Trie = @import("lib.zig").Trie;
+const WordDataSpec = @import("lib.zig").WordDataSpec;
+const serializeTrie = @import("lib.zig").serializeTrie;
+const iterateSerializedTrie = @import("lib.zig").iterateSerializedTrie;
 
 test "put and get" {
     const test_alloc = std.testing.allocator;

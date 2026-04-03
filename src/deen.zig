@@ -1,9 +1,9 @@
 const std = @import("std");
 const Allocator = @import("std").mem.Allocator;
 const ArrayList = @import("std").ArrayList;
-const WordDataSpec = @import("prefix_trie.zig").WordDataSpec;
-const getFromSerializedTrie = @import("prefix_trie.zig").getFromSerializedTrie;
-const iterateSerializedTrie = @import("prefix_trie.zig").iterateSerializedTrie;
+const WordDataSpec = @import("lib.zig").WordDataSpec;
+const getFromSerializedTrie = @import("lib.zig").getFromSerializedTrie;
+const iterateSerializedTrie = @import("lib.zig").iterateSerializedTrie;
 
 const Parameters = struct {
     keys: [][]const u8,

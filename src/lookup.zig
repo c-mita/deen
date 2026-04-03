@@ -1,8 +1,7 @@
 const std = @import("std");
-const words = @import("words.zig");
-const WordDataSpec = @import("prefix_trie.zig").WordDataSpec;
-const getFromSerializedTrie = @import("prefix_trie.zig").getFromSerializedTrie;
-const iterateSerializedTrie = @import("prefix_trie.zig").iterateSerializedTrie;
+const WordDataSpec = @import("lib.zig").WordDataSpec;
+const getFromSerializedTrie = @import("lib.zig").getFromSerializedTrie;
+const iterateSerializedTrie = @import("lib.zig").iterateSerializedTrie;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};

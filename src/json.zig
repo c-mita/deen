@@ -1,5 +1,6 @@
 const std = @import("std");
-const words = @import("words.zig");
+const Definition = @import("lib.zig").Definition;
+const Sense = @import("lib.zig").Sense;
 
 pub const WordSense = struct {
     glosses: ?[]const []const u8 = null,
@@ -20,10 +21,10 @@ pub fn isGermanWord(entry: WordEntry) bool {
     return true;
 }
 
-pub fn interpreteWord(allocator: std.mem.Allocator, entry: WordEntry) !words.Definition {
+pub fn interpreteWord(allocator: std.mem.Allocator, entry: WordEntry) !Definition {
     const word = entry.word;
     const pos = entry.pos;
-    var sense_data = try std.ArrayList(words.Sense).initCapacity(allocator, 8);
+    var sense_data = try std.ArrayList(Sense).initCapacity(allocator, 8);
     for (entry.senses) |sense| {
         // prefer raw_glosses if it exists since it contains tag information
         const raw_glosses = sense.raw_glosses orelse &[_][]const u8{};

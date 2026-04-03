@@ -2,11 +2,12 @@ const std = @import("std");
 const Allocator = @import("std").mem.Allocator;
 const ArrayList = @import("std").ArrayList;
 const json = @import("json.zig");
-const words = @import("words.zig");
-const Trie = @import("prefix_trie.zig").Trie;
-const WordDataSpec = @import("prefix_trie.zig").WordDataSpec;
-const serializeTrie = @import("prefix_trie.zig").serializeTrie;
-const getFromSerializedTrie = @import("prefix_trie.zig").getFromSerializedTrie;
+const collateEntries = @import("lib.zig").collateEntries;
+const Definition = @import("lib.zig").Definition;
+const Trie = @import("lib.zig").Trie;
+const WordDataSpec = @import("lib.zig").WordDataSpec;
+const serializeTrie = @import("lib.zig").serializeTrie;
+const getFromSerializedTrie = @import("lib.zig").getFromSerializedTrie;
 
 fn structureData(
     allocator: Allocator,
@@ -53,7 +54,7 @@ pub fn main() !void {
     const stdin_read_buf: []u8 = try gen_alloc.alloc(u8, 1024 * 1024 * 8);
     var stdin_reader = stdin.readerStreaming(stdin_read_buf);
 
-    var word_list = try ArrayList(words.Definition).initCapacity(allocator, 1024);
+    var word_list = try ArrayList(Definition).initCapacity(allocator, 1024);
     while (true) {
         var scratch_arena = std.heap.ArenaAllocator.init(allocator);
         const scratch_alloc = scratch_arena.allocator();
@@ -81,7 +82,7 @@ pub fn main() !void {
     }
 
     var trie = Trie(WordDataSpec).init();
-    const word_defs = try words.collateEntries(allocator, word_list.items);
+    const word_defs = try collateEntries(allocator, word_list.items);
     const word_def_map, const definition_data = try structureData(allocator, word_defs);
     var def_iterator = word_def_map.iterator();
     while (def_iterator.next()) |entry| {
