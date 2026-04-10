@@ -36,15 +36,18 @@ pub fn interpreteWord(allocator: std.mem.Allocator, entry: WordEntry) !Definitio
         const subglosses = if (glosses.len > 1) glosses[1..] else &[_][]const u8{};
 
         if (subglosses.len > 0) {
-            // find the existing sense and add the new subsense
+            // find the matching sense if it exists and add the new subsense
+            var subsenses: *std.ArrayList([]const u8) = undefined;
             for (sense_data.items) |*existing| {
                 if (!std.mem.eql(u8, existing.sense, gloss)) continue;
-                try existing.subsenses.appendSlice(allocator, subglosses);
+                subsenses = &existing.subsenses;
                 break;
             } else {
-                const subsenses = try std.ArrayList([]const u8).initCapacity(allocator, subglosses.len);
-                try sense_data.append(allocator, .{ .sense = gloss, .subsenses = subsenses });
+                const new_subsenses = try std.ArrayList([]const u8).initCapacity(allocator, subglosses.len);
+                try sense_data.append(allocator, .{ .sense = gloss, .subsenses = new_subsenses });
+                subsenses = &sense_data.items[sense_data.items.len - 1].subsenses;
             }
+            try subsenses.appendSlice(allocator, subglosses);
         } else {
             try sense_data.append(allocator, .{ .sense = gloss, .subsenses = std.ArrayList([]const u8).empty });
         }
