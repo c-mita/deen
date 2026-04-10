@@ -1,11 +1,13 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
+    const optimization = b.standardOptimizeOption(.{});
     const process = b.addExecutable(.{
         .name = "process",
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/process.zig"),
             .target = b.graph.host,
+            .optimize = optimization,
         }),
     });
 
@@ -14,6 +16,7 @@ pub fn build(b: *std.Build) void {
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/de_filter.zig"),
             .target = b.graph.host,
+            .optimize = optimization,
         }),
     });
 
@@ -22,6 +25,7 @@ pub fn build(b: *std.Build) void {
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/lookup.zig"),
             .target = b.graph.host,
+            .optimize = optimization,
         }),
     });
 
