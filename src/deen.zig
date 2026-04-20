@@ -118,7 +118,7 @@ fn potentialReverseSubstitutions(allocator: Allocator, word: []const u8) !SubIte
     var positions: [15]u8 = [_]u8{0} ** 15;
     var idx: u8 = 0;
     var p_idx: u4 = 0;
-    while (idx < word.len - 1) {
+    while (word.len > 0 and idx < word.len - 1) {
         const v1 = word[idx];
         const v2 = word[idx + 1];
         var can_sub = false;
