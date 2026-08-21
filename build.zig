@@ -10,6 +10,14 @@ pub fn build(b: *std.Build) void {
             .optimize = optimization,
         }),
     });
+    const process_check = b.addExecutable(.{
+        .name = "process_check",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/process.zig"),
+            .target = b.graph.host,
+            .optimize = optimization,
+        }),
+    });
 
     const de_filter = b.addExecutable(.{
         .name = "de_filter",
@@ -19,6 +27,15 @@ pub fn build(b: *std.Build) void {
             .optimize = optimization,
         }),
     });
+    const de_filter_check = b.addExecutable(.{
+        .name = "de_filter_check",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/de_filter.zig"),
+            .target = b.graph.host,
+            .optimize = optimization,
+        }),
+    });
+
 
     const lookup = b.addExecutable(.{
         .name = "lookup",
@@ -28,6 +45,15 @@ pub fn build(b: *std.Build) void {
             .optimize = optimization,
         }),
     });
+    const lookup_check = b.addExecutable(.{
+        .name = "lookup_check",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/lookup.zig"),
+            .target = b.graph.host,
+            .optimize = optimization,
+        }),
+    });
+
 
     const german_jsonl_gz = b.path("data/german_defs.jsonl.gz");
     const unzip_jsonl = b.addSystemCommand(&.{
@@ -46,6 +72,15 @@ pub fn build(b: *std.Build) void {
             .optimize = .ReleaseSafe,
         }),
     });
+    const trie_builder_check = b.addExecutable(.{
+        .name = "trie_builder_check",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/process.zig"),
+            .target = b.graph.host,
+            .optimize = .ReleaseSafe,
+        }),
+    });
+
 
     const run_processor = b.addRunArtifact(trie_builder);
 
@@ -64,6 +99,19 @@ pub fn build(b: *std.Build) void {
     deen.root_module.addAnonymousImport("data.trie", .{ .root_source_file = trie_data });
     deen.root_module.addAnonymousImport("data.dat", .{ .root_source_file = definition_data });
 
+    const deen_check = b.addExecutable(.{
+        .name = "deen_check",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/deen.zig"),
+            .target = b.graph.host,
+            .optimize = .ReleaseSmall,
+        }),
+    });
+    const wf = b.addWriteFiles();
+    const dummy_dat = wf.add("dummy.dat", "nichts");
+    deen_check.root_module.addAnonymousImport("data.trie", .{ .root_source_file = dummy_dat });
+    deen_check.root_module.addAnonymousImport("data.dat", .{ .root_source_file = dummy_dat });
+
     const gen_step = b.step("generate", "Generate the trie assests");
     gen_step.dependOn(&run_processor.step);
 
@@ -78,4 +126,11 @@ pub fn build(b: *std.Build) void {
     tools_step.dependOn(&de_filter_artifact.step);
     tools_step.dependOn(&process_artifact.step);
     tools_step.dependOn(&lookup_artifact.step);
+
+    const check = b.step("check", "Check everything compiles");
+    check.dependOn(&deen_check.step);
+    check.dependOn(&process_check.step);
+    check.dependOn(&de_filter_check.step);
+    check.dependOn(&lookup_check.step);
+    check.dependOn(&trie_builder_check.step);
 }
