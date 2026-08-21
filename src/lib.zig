@@ -337,6 +337,7 @@ pub const Sense = struct {
 pub const Definition = struct {
     word: []const u8,
     type: []const u8,
+    headers: [][]const u8,
     senses: []const Sense,
 };
 
@@ -371,10 +372,20 @@ pub fn collateEntries(allocator: Allocator, entries: []Definition) !std.StringHa
 
 pub fn printEntry(writer: *std.Io.Writer, entry: Definition) !void {
     try writer.print("{s} - {s}\n", .{ entry.word, entry.type });
+
+    for (entry.headers) |header| {
+        var stripped = header;
+        if (std.mem.startsWith(u8, stripped, entry.word)) {
+            stripped = stripped[entry.word.len..];
+            stripped = std.mem.trim(u8, stripped, " ");
+        }
+        try writer.print(" {s}\n", .{ stripped });
+    }
+
     for (entry.senses) |sense| {
-        try writer.print(" - {s}\n", .{sense.sense});
+        try writer.print("  - {s}\n", .{sense.sense});
         for (sense.subsenses.items) |subsense| {
-            try writer.print(" - - {s}\n", .{subsense});
+            try writer.print("  - - {s}\n", .{subsense});
         }
     }
 }

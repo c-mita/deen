@@ -7,10 +7,16 @@ pub const WordSense = struct {
     raw_glosses: ?[]const []const u8 = null,
 };
 
+pub const WordHeadTemplate = struct {
+    name: []const u8,
+    expansion: []const u8,
+};
+
 pub const WordEntry = struct {
     word: []const u8,
     pos: []const u8,
     lang_code: []const u8,
+    head_templates: []const WordHeadTemplate = &.{},
     senses: []const WordSense,
 };
 
@@ -24,6 +30,14 @@ pub fn isGermanWord(entry: WordEntry) bool {
 pub fn interpreteWord(allocator: std.mem.Allocator, entry: WordEntry) !Definition {
     const word = entry.word;
     const pos = entry.pos;
+    var headers: std.ArrayList([]const u8) = .{};
+    // search for head_templates with the name "de-[pos]" - theses are usually interesting
+    // typically there's only one, but sometimes there are more (e.g. for "der Butter")
+    for (entry.head_templates) |head_template| {
+        if (std.mem.eql(u8, head_template.name[0..3], "de-") and std.mem.eql(u8, head_template.name[3..], entry.pos)) {
+            try headers.append(allocator, head_template.expansion);
+        }
+    }
     var sense_data = try std.ArrayList(Sense).initCapacity(allocator, 8);
     for (entry.senses) |sense| {
         // prefer raw_glosses if it exists since it contains tag information
@@ -52,5 +66,5 @@ pub fn interpreteWord(allocator: std.mem.Allocator, entry: WordEntry) !Definitio
             try sense_data.append(allocator, .{ .sense = gloss, .subsenses = std.ArrayList([]const u8).empty });
         }
     }
-    return .{ .word = word, .type = pos, .senses = sense_data.items };
+    return .{ .word = word, .type = pos, .headers = headers.items, .senses = sense_data.items };
 }
