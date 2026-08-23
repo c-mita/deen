@@ -5,6 +5,14 @@ const Sense = @import("lib.zig").Sense;
 pub const WordSense = struct {
     glosses: ?[]const []const u8 = null,
     raw_glosses: ?[]const []const u8 = null,
+    alt_of: ?[]const OfWord = null,
+    form_of: ?[]const OfWord = null,
+};
+
+pub const OfWord = struct {
+    /// sense.alt_of and senes.form_of are a list dicts with the key "word" being
+    /// the only interesting one
+    word: []const u8,
 };
 
 pub const WordHeadTemplate = struct {
@@ -40,6 +48,18 @@ pub fn interpreteWord(allocator: std.mem.Allocator, entry: WordEntry) !Definitio
     }
     var sense_data = try std.ArrayList(Sense).initCapacity(allocator, 8);
     for (entry.senses) |sense| {
+        var word_alternates: std.ArrayList([]const u8) = .{};
+        const alts = sense.alt_of orelse &[_] OfWord{};
+        for (alts) |alt_word| {
+            try word_alternates.append(allocator, alt_word.word);
+        }
+
+        var word_forms: std.ArrayList([]const u8) = .{};
+        const forms = sense.form_of orelse &[_] OfWord{};
+        for (forms) |form| {
+            try word_forms.append(allocator, form.word);
+        }
+
         // prefer raw_glosses if it exists since it contains tag information
         const raw_glosses = sense.raw_glosses orelse &[_][]const u8{};
         const glosses = if (raw_glosses.len > 0) raw_glosses else sense.glosses orelse &[_][]const u8{};
@@ -58,12 +78,26 @@ pub fn interpreteWord(allocator: std.mem.Allocator, entry: WordEntry) !Definitio
                 break;
             } else {
                 const new_subsenses = try std.ArrayList([]const u8).initCapacity(allocator, subglosses.len);
-                try sense_data.append(allocator, .{ .sense = gloss, .subsenses = new_subsenses });
+                try sense_data.append(
+                    allocator,
+                    .{
+                        .sense = gloss,
+                        .subsenses = new_subsenses,
+                        .alternate_of = word_alternates.items,
+                        .form_of = word_forms.items,
+                    });
                 subsenses = &sense_data.items[sense_data.items.len - 1].subsenses;
             }
             try subsenses.appendSlice(allocator, subglosses);
         } else {
-            try sense_data.append(allocator, .{ .sense = gloss, .subsenses = std.ArrayList([]const u8).empty });
+            try sense_data.append(
+                allocator,
+                .{
+                    .sense = gloss,
+                    .subsenses = std.ArrayList([]const u8).empty,
+                    .alternate_of = word_alternates.items,
+                    .form_of = word_forms.items,
+                });
         }
     }
     return .{ .word = word, .type = pos, .headers = headers.items, .senses = sense_data.items };

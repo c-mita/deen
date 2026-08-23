@@ -332,6 +332,8 @@ pub fn iterateSerializedTrie(allocator: Allocator, buffer: []const u8, start: []
 pub const Sense = struct {
     sense: []const u8,
     subsenses: ArrayList([]const u8),
+    alternate_of: [][]const u8,
+    form_of: [][]const u8,
 };
 
 pub const Definition = struct {
