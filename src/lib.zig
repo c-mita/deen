@@ -126,13 +126,13 @@ fn TrieNode(comptime T: type) type {
 
 pub const WordDataSpec = struct {
     start: u32 = 0,
-    len: u32 = 0,
+    len: u16 = 0,
 };
 
 const SerializedNodeHeader = struct {
     value_offset: u32,
-    value_size: u32,
-    child_count: u32,
+    value_size: u16,
+    child_count: u8,
 };
 
 const SerializedChild = struct {
@@ -230,7 +230,7 @@ fn serializeTrieRec(allocator: Allocator, node: TrieNode(WordDataSpec), data: *A
 pub fn getFromSerializedTrie(serialized: []const u8, key: []const u8) !?WordDataSpec {
     const wrapped = navigateToSubTrie(serialized, key) orelse return null;
     const node = wrapped.data;
-    return .{ .start = node.value_offset, .len = node.value_size };
+    return .{ .start = node.value_offset, .len = @intCast(node.value_size) };
 }
 
 pub const KeyedWordDataSpec = struct {
@@ -269,7 +269,7 @@ const SerializedTrieIterator = struct {
                 try it.stack.append(it.allocator, .{ .data = target_node, .offset = child_node.node_offset });
                 try it.key_stack.append(it.allocator, child_key);
             }
-            spec = .{ .start = node.data.value_offset, .len = node.data.value_size };
+            spec = .{ .start = node.data.value_offset, .len = @intCast(node.data.value_size) };
             key = try it.allocator.alloc(u8, partial_key.len);
             std.mem.copyForwards(u8, key, partial_key);
         }
