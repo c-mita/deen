@@ -381,7 +381,9 @@ pub fn printEntry(writer: *std.Io.Writer, entry: Definition) !void {
             stripped = stripped[entry.word.len..];
             stripped = std.mem.trim(u8, stripped, " ");
         }
-        try writer.print(" {s}\n", .{ stripped });
+        if (stripped.len > 0) {
+            try writer.print(" {s}\n", .{ stripped });
+        }
     }
 
     for (entry.senses) |sense| {
