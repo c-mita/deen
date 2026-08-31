@@ -18,4 +18,4 @@ The https://github.com/tatuylonen/wiktextract project describes the JSONL file u
 
 ## Zig version
 
-The code was written for, and compiles with, zig version 0.15.2.
+The code was written for, and compiles with, zig version 0.16.0.

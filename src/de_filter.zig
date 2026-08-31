@@ -12,17 +12,17 @@ pub fn isNotGermanWord(entry: FilterEntry) bool {
     return false;
 }
 
-pub fn main() !void {
-    const stdout = std.fs.File.stdout();
+pub fn main(init: std.process.Init) !void {
+    const stdout = std.Io.File.stdout();
     var write_buf: [128]u8 = undefined;
-    var stdout_writer = stdout.writer(&write_buf);
+    var stdout_writer = stdout.writer(init.io, &write_buf);
     defer stdout_writer.interface.flush() catch {};
 
-    const stdin = std.fs.File.stdin();
+    const stdin = std.Io.File.stdin();
     var stdin_buf: [8 * 1024 * 1024]u8 = undefined;
-    var stdin_reader = stdin.readerStreaming(&stdin_buf);
+    var stdin_reader = stdin.readerStreaming(init.io, &stdin_buf);
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa = std.heap.DebugAllocator(.{}){};
     const gen_alloc = gpa.allocator();
 
     while (true) {

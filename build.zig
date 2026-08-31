@@ -62,7 +62,7 @@ pub fn build(b: *std.Build) void {
         "-d",
     });
     unzip_jsonl.addFileArg(german_jsonl_gz);
-    const unzip_stdout = unzip_jsonl.captureStdOut();
+    const unzip_stdout = unzip_jsonl.captureStdOut(.{});
 
     const trie_builder = b.addExecutable(.{
         .name = "trie_builder",

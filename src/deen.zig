@@ -13,20 +13,17 @@ const Parameters = struct {
     allow_empty: bool,
 };
 
-fn parseArguments(allocator: Allocator) !Parameters {
+fn parseArguments(allocator: Allocator, args: []const [:0]const u8) !Parameters {
     var arena = std.heap.ArenaAllocator.init(allocator);
     defer arena.deinit();
-    const arena_alloc = arena.allocator();
 
     var walk: bool = false;
     var retrieve: bool = true;
     var allow_empty: bool = false;
-    var keys: ArrayList([]const u8) = .{};
+    var keys: ArrayList([]const u8) = .empty;
     var search_key: []const u8 = &[_]u8{};
 
-    var args = try std.process.argsWithAllocator(arena_alloc);
-    _ = args.skip();
-    while (args.next()) |arg| {
+    for (args[1..]) |arg| {
         if (std.mem.eql(u8, "--walk", arg)) {
             walk = true;
             retrieve = false;
@@ -147,22 +144,23 @@ fn potentialReverseSubstitutions(allocator: Allocator, word: []const u8) !SubIte
     };
 }
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     const trie_data: []const u8 align(4096) = @embedFile("data.trie");
     const definition_data: []const u8 align(4096) = @embedFile("data.dat");
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa = std.heap.DebugAllocator(.{}){};
     const gen_alloc = gpa.allocator();
     var arena = std.heap.ArenaAllocator.init(gen_alloc);
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    const stdout = std.fs.File.stdout();
+    const stdout = std.Io.File.stdout();
     var write_buf: [128]u8 = undefined;
-    var stdout_writer = stdout.writer(&write_buf);
+    var stdout_writer = stdout.writer(init.io, &write_buf);
     defer stdout_writer.interface.flush() catch {};
 
-    const parameters = parseArguments(allocator) catch |err| {
+    const args = try init.minimal.args.toSlice(allocator);
+    const parameters = parseArguments(allocator, args) catch |err| {
         if (err == error.InvalidArguments) {
             try stdout_writer.interface.print("deen [--allow_empty] [--walk word] words...\n", .{});
         }

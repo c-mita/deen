@@ -42,31 +42,26 @@ fn isRespelling(sense_text: []const u8) bool {
     return spelling_of & likely;
 }
 
-pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+pub fn main(init: std.process.Init) !void {
+    var gpa = std.heap.DebugAllocator(.{}){};
     var gen_alloc = gpa.allocator();
     var arena = std.heap.ArenaAllocator.init(gen_alloc);
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    var args = try std.process.argsWithAllocator(allocator);
-    var trie_file: []const u8 = &[_]u8{};
-    var definition_file: []const u8 = &[_]u8{};
-    _ = args.skip();
-    const first_arg = args.next();
-    const second_arg = args.next();
-    if (first_arg == null or second_arg == null) {
+    const args = try init.minimal.args.toSlice(allocator);
+    if (args.len < 3) {
         std.debug.print("Require output trie and definition file paths\n", .{});
         return error.InvalidCommandLine;
     }
-    trie_file = first_arg.?;
-    definition_file = second_arg.?;
+    const trie_file = args[1];
+    const definition_file = args[2];
 
-    const stdin = std.fs.File.stdin();
+    const stdin = std.Io.File.stdin();
 
     // some of the JSON lines are quite big, so we need a big read buffer
     const stdin_read_buf: []u8 = try gen_alloc.alloc(u8, 1024 * 1024 * 8);
-    var stdin_reader = stdin.readerStreaming(stdin_read_buf);
+    var stdin_reader = stdin.readerStreaming(init.io, stdin_read_buf);
 
     var word_list = try ArrayList(Definition).initCapacity(allocator, 1024);
     var omitted_words: std.StringArrayHashMapUnmanaged(bool) = .{};
@@ -112,7 +107,7 @@ pub fn main() !void {
     }
 
     // Filter out words that are only a form of an omitted word
-    var filtered_word_list: std.ArrayList(Definition) = .{};
+    var filtered_word_list: std.ArrayList(Definition) = .empty;
     for (word_list.items) |word| {
         sense_loop: for (word.senses) |sense| {
             if (isRespelling(sense.sense)) {
@@ -146,9 +141,9 @@ pub fn main() !void {
     }
 
     const serialized = try serializeTrie(allocator, trie);
-    var trie_out_file = try std.fs.cwd().createFile(trie_file, .{});
-    try trie_out_file.writeAll(serialized);
+    var trie_out_file = try std.Io.Dir.cwd().createFile(init.io, trie_file, .{});
+    try trie_out_file.writeStreamingAll(init.io, serialized);
 
-    var text_out_file = try std.fs.cwd().createFile(definition_file, .{});
-    try text_out_file.writeAll(definition_data);
+    var text_out_file = try std.Io.Dir.cwd().createFile(init.io, definition_file, .{});
+    try text_out_file.writeStreamingAll(init.io, definition_data);
 }

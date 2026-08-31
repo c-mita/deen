@@ -38,7 +38,7 @@ pub fn isGermanWord(entry: WordEntry) bool {
 pub fn interpreteWord(allocator: std.mem.Allocator, entry: WordEntry) !Definition {
     const word = entry.word;
     const pos = entry.pos;
-    var headers: std.ArrayList([]const u8) = .{};
+    var headers: std.ArrayList([]const u8) = .empty;
     // search for head_templates with the name "de-[pos]" - theses are usually interesting
     // typically there's only one, but sometimes there are more (e.g. for "der Butter")
     for (entry.head_templates) |head_template| {
@@ -48,13 +48,13 @@ pub fn interpreteWord(allocator: std.mem.Allocator, entry: WordEntry) !Definitio
     }
     var sense_data = try std.ArrayList(Sense).initCapacity(allocator, 8);
     for (entry.senses) |sense| {
-        var word_alternates: std.ArrayList([]const u8) = .{};
+        var word_alternates: std.ArrayList([]const u8) = .empty;
         const alts = sense.alt_of orelse &[_] OfWord{};
         for (alts) |alt_word| {
             try word_alternates.append(allocator, alt_word.word);
         }
 
-        var word_forms: std.ArrayList([]const u8) = .{};
+        var word_forms: std.ArrayList([]const u8) = .empty;
         const forms = sense.form_of orelse &[_] OfWord{};
         for (forms) |form| {
             try word_forms.append(allocator, form.word);

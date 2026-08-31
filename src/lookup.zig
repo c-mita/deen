@@ -3,27 +3,27 @@ const WordDataSpec = @import("lib.zig").WordDataSpec;
 const getFromSerializedTrie = @import("lib.zig").getFromSerializedTrie;
 const iterateSerializedTrie = @import("lib.zig").iterateSerializedTrie;
 
-pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+pub fn main(init: std.process.Init) !void {
+    var gpa = std.heap.DebugAllocator(.{}){};
     const gen_alloc = gpa.allocator();
     var arena = std.heap.ArenaAllocator.init(gen_alloc);
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    var args = try std.process.argsWithAllocator(allocator);
+    var args = try init.minimal.args.iterateAllocator(allocator);
     _ = args.skip();
 
     const trie_file_path = try (args.next() orelse error.MissingArgument);
     const definition_file_path = try (args.next() orelse error.MissingArgument);
     const target_word = try (args.next() orelse error.MissingArgument);
 
-    const trie_file = try std.fs.cwd().openFile(trie_file_path, .{});
-    const trie_bytes_size = (try trie_file.stat()).size;
+    const trie_file = try std.Io.Dir.cwd().openFile(init.io, trie_file_path, .{});
+    const trie_bytes_size = (try trie_file.stat(init.io)).size;
 
     const trie_bytes = try std.posix.mmap(
         null,
         trie_bytes_size,
-        std.posix.PROT.READ,
+        .{ .READ = true },
         .{ .TYPE = .SHARED },
         trie_file.handle,
         0,
@@ -32,12 +32,12 @@ pub fn main() !void {
 
     const spec: WordDataSpec = try getFromSerializedTrie(trie_bytes, target_word) orelse .{};
 
-    const definition_file = try std.fs.cwd().openFile(definition_file_path, .{});
-    const definition_file_size = (try definition_file.stat()).size;
+    const definition_file = try std.Io.Dir.cwd().openFile(init.io, definition_file_path, .{});
+    const definition_file_size = (try definition_file.stat(init.io)).size;
     const definition_bytes = try std.posix.mmap(
         null,
         definition_file_size,
-        std.posix.PROT.READ,
+        .{ .READ = true },
         .{ .TYPE = .SHARED },
         definition_file.handle,
         0,

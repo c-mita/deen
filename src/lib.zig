@@ -26,7 +26,7 @@ pub fn Trie(comptime T: type) type {
         }
 
         pub fn iterateFrom(self: *const Self, allocator: Allocator, key: []const u8) !Iterator {
-            const node = self.root.get(key) orelse return .{ .stack = .{}, .allocator = allocator };
+            const node = self.root.get(key) orelse return .{ .stack = .empty, .allocator = allocator };
             return iterateFromNode(allocator, node);
         }
 
@@ -83,7 +83,7 @@ fn TrieNode(comptime T: type) type {
         children: ArrayList(NodePair(T)),
 
         pub fn init() Self {
-            return .{ .key = null, .value = null, .children = .{} };
+            return .{ .key = null, .value = null, .children = .empty };
         }
 
         pub fn get(self: *const Self, key: []const u8) ?Self {
@@ -196,7 +196,7 @@ fn deserializeType(comptime T: type, bytes: []const u8) T {
 }
 
 pub fn serializeTrie(allocator: Allocator, trie: Trie(WordDataSpec)) ![]const u8 {
-    var data: ArrayList(u8) = .{};
+    var data: ArrayList(u8) = .empty;
     _ = try serializeTrieRec(allocator, trie.root, &data);
     return data.items;
 }
@@ -308,8 +308,8 @@ fn navigateToSubTrie(buffer: []const u8, key: []const u8) ?Indexed(SerializedNod
 
 pub fn iterateSerializedTrie(allocator: Allocator, buffer: []const u8, start: []const u8) !SerializedTrieIterator {
     const root = navigateToSubTrie(buffer, start) orelse return .{
-        .stack = .{},
-        .key_stack = .{},
+        .stack = .empty,
+        .key_stack = .empty,
         .allocator = allocator,
         .buffer = buffer,
     };
@@ -317,8 +317,8 @@ pub fn iterateSerializedTrie(allocator: Allocator, buffer: []const u8, start: []
     // and might try to free the passed in "start" buffer - copy the key so this is fine.
     const key = try allocator.alloc(u8, start.len);
     std.mem.copyForwards(u8, key, start);
-    var stack: ArrayList(Indexed(SerializedNodeHeader)) = .{};
-    var key_stack: ArrayList([]const u8) = .{};
+    var stack: ArrayList(Indexed(SerializedNodeHeader)) = .empty;
+    var key_stack: ArrayList([]const u8) = .empty;
     try stack.append(allocator, root);
     try key_stack.append(allocator, key);
     return .{
@@ -349,7 +349,7 @@ pub fn collateEntries(allocator: Allocator, entries: []Definition) !std.StringHa
     const arena_alloc = arena.allocator();
 
     var current_word: []const u8 = &.{};
-    var writer: std.io.Writer.Allocating = .init(arena_alloc);
+    var writer: std.Io.Writer.Allocating = .init(arena_alloc);
     var output_map = std.StringHashMapUnmanaged([]u8){};
     for (entries) |entry| {
         if (!std.mem.eql(u8, current_word, entry.word)) {
@@ -365,7 +365,7 @@ pub fn collateEntries(allocator: Allocator, entries: []Definition) !std.StringHa
             }
             current_word = entry.word;
             writer.deinit();
-            writer = std.io.Writer.Allocating.init(arena_alloc);
+            writer = std.Io.Writer.Allocating.init(arena_alloc);
         }
         try printEntry(&writer.writer, entry);
     }
